@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>One-Hana 로컬재생 STO 거래소</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g1: #008C5E; --g2: #005A3C; --g3: #00B574;
+  --g-light: #E8F5EE; --g-mid: #C0E8D0;
+  --point: #E8006E; --point2: #FF2D87; --point-light: #FFE8F3;
+  --gold: #F5A623; --gold-light: #FFF4E0;
+  --bg: #F2F5F3; --card: #FFFFFF; --card2: #F8FBF9; --border: #E4EDE8;
+  --text1: #0D1F17; --text2: #2D4A3A; --text3: #6A8878; --text4: #9AB8A8;
+  --up-color: #F23D3D; --up-bg: #FEEDED;
+  --down-color: #1E88E5; --down-bg: #E8F3FC;
+  --nav-h: 62px; --hdr-h: 60px;
+  --r1: 8px; --r2: 14px; --r3: 20px; --r4: 28px;
+  --s1: 0 1px 4px rgba(0,70,40,.06);
+  --s2: 0 4px 18px rgba(0,70,40,.10);
+  --s3: 0 10px 40px rgba(0,70,40,.16);
+  --s-point: 0 4px 20px rgba(232,0,110,.25);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;max-width:430px;margin:0 auto;min-height:100svh;background:#D8E8DF;font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative;}
+body{background:var(--bg);}
+::-webkit-scrollbar{display:none;}
+@media(min-width:500px){body{box-shadow:0 0 0 1px rgba(0,0,0,.12),0 24px 80px rgba(0,0,0,.2);border-radius:40px;overflow:hidden;min-height:100svh;}}
+
+.app-wrap{display:flex;flex-direction:column;min-height:100svh;background:var(--bg);}
+.screen{display:none;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + 12px);}
+.screen.active{display:flex;}
+.c-up{color:var(--up-color)!important;}.c-down{color:var(--down-color)!important;}
+.bg-up{background:var(--up-bg)!important;}.bg-down{background:var(--down-bg)!important;}
+.sec{padding:16px 18px;}
+.sec-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.stitle{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;}
+.stitle h3{font-size:15px;font-weight:800;color:var(--text1);}
+.stitle a{font-size:12px;color:var(--g1);font-weight:600;text-decoration:none;}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:10px;font-size:10.5px;font-weight:600;}
+.tag.green{background:var(--g-light);color:var(--g2);}
+.tag.red{background:var(--point-light);color:var(--point);}
+.tag.gold{background:var(--gold-light);color:#8A5A00;}
+.card-base{background:var(--card);border-radius:var(--r2);border:1px solid var(--border);box-shadow:var(--s1);}
+.sep{height:8px;background:var(--bg);margin:12px -18px;flex-shrink:0;}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);height:var(--hdr-h);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;}
+.hdr-left{display:flex;align-items:center;gap:10px;}
+.hdr-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g3));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:white;}
+.hdr-name{font-size:14px;font-weight:700;color:var(--text1);}
+.hdr-name small{display:block;font-size:10.5px;font-weight:400;color:var(--text3);margin-top:-1px;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.hdr-asset-lbl{font-size:10px;color:var(--text3);font-weight:500;}
+.hdr-asset-val{font-size:17px;font-weight:800;color:var(--text1);line-height:1.1;font-family:'DM Mono',monospace;}
+.search-btn{width:36px;height:36px;border-radius:50%;background:var(--g-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s;}
+.search-btn:active{background:var(--g-mid);}
+
+/* SEARCH OVERLAY */
+.search-overlay{position:fixed;inset:0;z-index:500;background:var(--bg);transform:translateY(-100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;}
+.search-overlay.show{transform:translateY(0);}
+.search-top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:white;border-bottom:1px solid var(--border);}
+.search-input{flex:1;height:42px;border-radius:21px;border:1.5px solid var(--border);padding:0 18px;font-size:14px;font-family:inherit;outline:none;background:var(--bg);color:var(--text1);}
+.search-input:focus{border-color:var(--g1);}
+.search-cancel{border:none;background:none;font-size:14px;font-weight:700;color:var(--g1);cursor:pointer;white-space:nowrap;padding:0 4px;}
+.search-results{flex:1;overflow-y:auto;padding:12px 16px;}
+.search-item{display:flex;align-items:center;gap:12px;padding:14px;background:white;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.search-item:active{transform:scale(.98);background:var(--g-light);}
+.search-item-icon{width:44px;height:44px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.search-item-info{flex:1;}
+.search-item-name{font-size:14px;font-weight:700;color:var(--text1);}
+.search-item-cat{font-size:11.5px;color:var(--text3);margin-top:2px;}
+.search-item-price{text-align:right;flex-shrink:0;}
+.search-item-price .p{font-size:15px;font-weight:800;font-family:'DM Mono',monospace;color:var(--text1);}
+.search-item-price .c{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;}
+.search-empty{text-align:center;padding:40px 0;color:var(--text4);font-size:13px;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nav-h);z-index:200;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:stretch;padding-bottom:env(safe-area-inset-bottom,0px);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;cursor:pointer;color:var(--text4);font-size:9.5px;font-weight:600;padding:0 2px;}
+.nav-btn .ni{font-size:20px;line-height:1;transition:transform .2s;}
+.nav-btn.active{color:var(--g1);}
+.nav-btn.active .ni{transform:scale(1.12);}
+
+/* HOME */
+.hero{margin:14px 18px 0;border-radius:var(--r3);overflow:hidden;background:linear-gradient(135deg,#003A22 0%,#005A3C 45%,#008C5E 80%,#00B574 100%);padding:22px 20px 20px;position:relative;}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;position:relative;}
+.hero-lbl{font-size:11px;color:rgba(255,255,255,.8);font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.hero-lbl::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#8AEFB4;}
+.hero-basket-name{font-size:17px;font-weight:800;color:white;line-height:1.3;}
+.hero-badge{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(4px);white-space:nowrap;}
+.hero-divider{height:1px;background:rgba(255,255,255,.12);margin-bottom:16px;position:relative;}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;position:relative;}
+.hero-stat-lbl{font-size:10px;color:rgba(255,255,255,.55);margin-bottom:3px;font-weight:500;}
+.hero-stat-val{font-size:18px;font-weight:800;color:white;font-family:'DM Mono',monospace;line-height:1;}
+.hero-stat-val.up{color:#8AEFB4;}
+.hero-stat-val.pct{color:#FFD580;}
+.dividend-card{margin:14px 18px 0;border-radius:var(--r3);background:var(--card);border:1px solid var(--border);box-shadow:var(--s1);overflow:hidden;}
+.dividend-inner{padding:20px 20px 16px;position:relative;overflow:hidden;}
+.dividend-inner::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(0,140,94,.06),transparent 70%);}
+.div-lbl{font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.div-lbl .live-dot{width:8px;height:8px;border-radius:50%;background:var(--point);animation:livePulse 1.5s infinite;}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(0.8)}}
+.div-amount{font-size:42px;font-weight:800;color:var(--g1);font-family:'DM Mono',monospace;line-height:1;display:flex;align-items:baseline;gap:4px;}
+.div-amount .won{font-size:22px;font-weight:700;color:var(--text2);margin-right:2px;}
+.div-sub{margin-top:8px;}
+.div-sub-txt{font-size:11.5px;color:var(--text3);font-weight:500;}
+
+/* TOP10 */
+.top10-tabs{display:flex;gap:6px;padding:0 18px;margin-bottom:12px;overflow-x:auto;}
+.top10-tabs::-webkit-scrollbar{display:none;}
+.top10-tab{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:white;cursor:pointer;white-space:nowrap;color:var(--text2);transition:all .15s;flex-shrink:0;}
+.top10-tab.active{background:var(--g1);color:white;border-color:var(--g1);}
+.top10-list{padding:0 18px;display:flex;flex-direction:column;gap:6px;}
+.top10-item{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;transition:all .15s;}
+.top10-item:active{transform:scale(.98);background:var(--g-light);}
+.top10-item.rank-1{background:linear-gradient(135deg,#FFFDF0,#FFF8DC);border-color:var(--gold);box-shadow:0 2px 12px rgba(245,166,35,.12);}
+.top10-rank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;background:#EEF3EF;color:var(--text3);}
+.top10-item.rank-1 .top10-rank{background:var(--gold);color:white;}
+.top10-item.rank-2 .top10-rank{background:#C0C0C0;color:white;}
+.top10-item.rank-3 .top10-rank{background:#CD7F32;color:white;}
+.top10-icon{font-size:22px;flex-shrink:0;}
+.top10-info{flex:1;min-width:0;}
+.top10-name{font-size:13px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top10-cat{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.top10-right{text-align:right;flex-shrink:0;}
+.top10-val{font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:var(--text1);}
+.top10-sub{font-size:10.5px;font-weight:700;font-family:'DM Mono',monospace;margin-top:2px;}
+
+/* 발견 TAB */
+.discover-header{padding:20px 18px 10px;}
+.discover-header h2{font-size:20px;font-weight:800;color:var(--text1);line-height:1.3;}
+.discover-header p{font-size:12.5px;color:var(--text3);margin-top:4px;}
+.discover-filter-bar{display:flex;align-items:center;justify-content:space-between;padding:0 18px 12px;gap:8px;}
+.discover-tabs{display:flex;gap:6px;}
+.discover-tab{padding:7px 16px;border-radius:20px;font-size:12.5px;font-weight:700;border:1.5px solid var(--border);background:white;cursor:pointer;color:var(--text2);transition:all .15s;}
+.discover-tab.active{background:var(--g1);color:white;border-color:var(--g1);}
+.discover-sort{padding:7px 12px;border-radius:20px;font-size:11.5px;font-weight:600;border:1.5px solid var(--border);background:white;cursor:pointer;color:var(--text3);display:flex;align-items:center;gap:4px;}
+.discover-list{padding:0 18px 16px;display:flex;flex-direction:column;gap:10px;}
+.discover-item{display:flex;align-items:center;gap:14px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r3);box-shadow:var(--s1);cursor:pointer;transition:all .15s;}
+.discover-item:active{transform:scale(.98);background:var(--g-light);border-color:var(--g-mid);}
+.disc-img{width:52px;height:52px;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.disc-info{flex:1;min-width:0;}
+.disc-title{font-size:15px;font-weight:800;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.disc-cat{font-size:11.5px;color:var(--text3);font-weight:600;}
+.disc-price-wrap{text-align:right;flex-shrink:0;}
+.disc-price{font-size:16px;font-weight:800;color:var(--text1);font-family:'DM Mono',monospace;margin-bottom:2px;}
+.disc-change{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;display:flex;align-items:center;justify-content:flex-end;gap:2px;}
+.disc-yield{font-size:10.5px;color:var(--text3);margin-top:5px;font-weight:600;padding:2px 6px;background:var(--bg);border-radius:4px;display:inline-block;}
+.disc-star{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:all .2s;}
+.disc-star:active{transform:scale(.85);}
+.disc-star.active{background:var(--gold-light);border-color:var(--gold);}
+.region-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 12px;}
+.region-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:white;cursor:pointer;color:var(--text2);transition:all .15s;}
+.region-chip.active{background:var(--g1);color:white;border-color:var(--g1);}
+
+/* 관심종목 TAB */
+.market-list{padding:0 18px 16px;display:flex;flex-direction:column;gap:12px;}
+.market-item{display:flex;align-items:center;gap:14px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r3);box-shadow:var(--s1);cursor:pointer;transition:all .15s;}
+.market-item:active{transform:scale(.98);background:var(--g-light);border-color:var(--g-mid);}
+.mkt-img{width:52px;height:52px;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.mkt-info{flex:1;min-width:0;}
+.mkt-title{font-size:15px;font-weight:800;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.mkt-cat{font-size:11.5px;color:var(--text3);font-weight:600;}
+.mkt-price-wrap{text-align:right;flex-shrink:0;}
+.mkt-price{font-size:16px;font-weight:800;color:var(--text1);font-family:'DM Mono',monospace;margin-bottom:2px;}
+.mkt-change{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;display:flex;align-items:center;justify-content:flex-end;gap:2px;}
+.mkt-yield{font-size:11px;color:var(--text3);margin-top:5px;font-weight:600;padding:2px 6px;background:var(--bg);border-radius:4px;display:inline-block;}
+
+/* 통합매출 TAB */
+.sales-hero{background:linear-gradient(160deg,#0A1F14,#1A3A28);padding:22px 20px 24px;margin:14px 18px 0;border-radius:var(--r3);position:relative;overflow:hidden;}
+.sales-hero::before{content:'';position:absolute;bottom:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,200,120,.12),transparent 70%);}
+.sales-month{font-size:11.5px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+.sales-total-lbl{font-size:13px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:6px;}
+.sales-total-val{font-size:38px;font-weight:800;color:white;font-family:'DM Mono',monospace;line-height:1;}
+.sales-badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:5px 12px;border-radius:20px;background:rgba(0,200,120,.15);border:1px solid rgba(0,200,120,.3);font-size:11.5px;font-weight:700;color:#60F0A0;}
+.progress-card{margin:14px 18px 0;padding:20px;background:var(--card);border-radius:var(--r3);border:1px solid var(--border);box-shadow:var(--s1);}
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.prog-title{font-size:14px;font-weight:700;color:var(--text1);}
+.prog-pct-badge{padding:4px 12px;border-radius:20px;font-size:13px;font-weight:800;background:var(--point);color:white;box-shadow:var(--s-point);}
+.prog-track{height:22px;background:#EEF3EF;border-radius:11px;overflow:visible;position:relative;margin-bottom:10px;}
+.prog-fill{height:100%;border-radius:11px;background:linear-gradient(90deg,var(--g1),var(--g3),#A0FFD0);position:relative;overflow:hidden;transition:width 1.5s cubic-bezier(.22,1,.36,1);}
+.prog-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:shimmer 2s infinite;}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.prog-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:white;border:3px solid var(--g1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--g1);box-shadow:var(--s2);z-index:2;}
+.prog-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text3);}
+.prog-extra{margin-top:12px;padding:10px 14px;border-radius:var(--r1);background:linear-gradient(135deg,var(--point-light),#FFF0F8);border:1px solid rgba(232,0,110,.15);display:flex;align-items:center;gap:8px;}
+.prog-extra-icon{font-size:18px;}
+.prog-extra-txt{font-size:12px;font-weight:600;color:var(--point);line-height:1.5;}
+.weekly-chart{margin:14px 18px 0;padding:18px;background:var(--card);border-radius:var(--r3);border:1px solid var(--border);}
+.chart-bars{display:flex;gap:6px;align-items:flex-end;height:90px;margin:14px 0 8px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar-outer{width:100%;border-radius:6px 6px 0 0;background:#EEF3EF;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+.bar-inner{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--g3),var(--g1));transition:height 1s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;}
+.bar-inner.today{background:linear-gradient(180deg,var(--point2),var(--point));}
+.bar-inner::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.2),transparent);}
+.bar-lbl{font-size:9.5px;color:var(--text4);font-weight:500;}
+.bar-lbl.today{color:var(--point);font-weight:700;}
+.bar-val{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* 주주맵 TAB */
+.map-screen{padding-bottom:calc(var(--nav-h) + 12px);}
+.map-top-bar{padding:12px 18px;display:flex;flex-direction:column;gap:10px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:var(--hdr-h);z-index:50;}
+.map-top-row{display:flex;align-items:center;gap:6px;}
+.mpill{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:white;cursor:pointer;white-space:nowrap;color:var(--text2);transition:all .15s;flex-shrink:0;}
+.mpill.on{background:var(--g1);color:white;border-color:var(--g1);}
+.benefit-chip{padding:5px 11px;border-radius:20px;font-size:10.5px;font-weight:700;background:linear-gradient(135deg,var(--g-light),#E0F5E8);color:var(--g2);display:flex;align-items:center;gap:4px;flex-shrink:0;white-space:nowrap;border:1px solid var(--g-mid);}
+.map-svg-wrap{margin:12px 18px;border-radius:var(--r3);overflow:hidden;box-shadow:var(--s2);border:1px solid var(--border);position:relative;background:#EEF3EE;}
+.map-svg{width:100%;display:block;}
+.marker-popup{position:absolute;z-index:100;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;transform:translateY(4px);}
+.marker-popup.vis{opacity:1;transform:translateY(0);pointer-events:auto;}
+.mp-box{background:white;border-radius:var(--r2);box-shadow:var(--s3);padding:12px 14px;min-width:200px;border:1px solid var(--border);}
+.mp-name{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:4px;}
+.mp-benefit{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:var(--r1);background:linear-gradient(135deg,var(--point-light),#FFF0FA);border:1px solid rgba(232,0,110,.2);margin-bottom:8px;}
+.mp-benefit-ico{font-size:14px;}
+.mp-benefit-txt{font-size:11.5px;font-weight:700;color:var(--point);}
+.mp-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.mp-stat{background:var(--bg);border-radius:6px;padding:7px 8px;}
+.mp-stat-lbl{font-size:9.5px;color:var(--text3);}
+.mp-stat-val{font-size:13px;font-weight:700;color:var(--text1);font-family:'DM Mono',monospace;}
+.mp-close{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#EEF3EF;border:none;cursor:pointer;font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:center;pointer-events:auto;}
+.membership-card{margin:0 18px 14px;border-radius:var(--r3);overflow:hidden;background:linear-gradient(135deg,var(--point) 0%,#C0005A 100%);padding:18px 20px;position:relative;}
+.membership-card::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08);}
+.mc-label{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;margin-bottom:3px;}
+.mc-title{font-size:17px;font-weight:800;color:white;margin-bottom:10px;}
+.mc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.mc-stat-lbl{font-size:10px;color:rgba(255,255,255,.55);}
+.mc-stat-val{font-size:18px;font-weight:800;color:white;font-family:'DM Mono',monospace;}
+.mc-stat-val.accent{color:#FFD0E8;}
+.map-store-list{padding:0 18px;display:flex;flex-direction:column;gap:8px;}
+.map-store-item{background:var(--card);border-radius:var(--r2);padding:14px 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;}
+.map-store-item:active{transform:scale(.98);background:var(--g-light);}
+.msi-icon{font-size:26px;width:46px;height:46px;border-radius:var(--r1);background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.msi-body{flex:1;}
+.msi-name{font-size:14px;font-weight:700;color:var(--text1);}
+.msi-addr{font-size:11px;color:var(--text3);margin-top:1px;}
+.msi-benefit{margin-top:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;background:var(--point-light);color:var(--point);font-size:11px;font-weight:700;}
+.msi-right{text-align:right;flex-shrink:0;}
+.msi-today{font-size:11px;color:var(--text3);}
+.msi-amount{font-size:15px;font-weight:800;color:var(--g1);font-family:'DM Mono',monospace;}
+
+/* 자산 TAB */
+.wallet-card{margin:14px 18px;background:var(--card);border-radius:var(--r3);border:1px solid var(--border);box-shadow:var(--s2);padding:24px 20px;text-align:center;}
+.wallet-lbl{font-size:13px;color:var(--text3);font-weight:600;margin-bottom:8px;}
+.wallet-amt{font-size:36px;font-weight:800;color:var(--text1);font-family:'DM Mono',monospace;}
+.portfolio-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 18px 16px;}
+.ps-box{background:white;padding:16px;border-radius:var(--r2);border:1px solid var(--border);}
+.ps-lbl{font-size:11px;color:var(--text3);margin-bottom:4px;}
+.ps-val{font-size:18px;font-weight:800;color:var(--text1);font-family:'DM Mono',monospace;}
+.asset-section{padding:0 18px 16px;}
+.asset-section-title{font-size:15px;font-weight:800;color:var(--text1);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.tx-history-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:8px;}
+.tx-h-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.tx-h-icon.buy-icon{background:var(--up-bg);}.tx-h-icon.sell-icon{background:var(--down-bg);}.tx-h-icon.div-icon{background:var(--g-light);}
+.tx-h-body{flex:1;}
+.tx-h-title{font-size:13px;font-weight:700;color:var(--text1);}
+.tx-h-date{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.tx-h-amount{font-size:14px;font-weight:800;font-family:'DM Mono',monospace;text-align:right;flex-shrink:0;}
+.div-history-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:8px;}
+.div-h-month{width:44px;height:44px;border-radius:12px;background:var(--g-light);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.div-h-month .m{font-size:15px;font-weight:800;color:var(--g1);line-height:1;}
+.div-h-month .lbl{font-size:9px;color:var(--g2);font-weight:600;}
+.div-h-body{flex:1;}
+.div-h-title{font-size:13px;font-weight:700;color:var(--text1);}
+.div-h-date{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.div-h-amount{font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:var(--g1);text-align:right;flex-shrink:0;}
+.tax-card{margin:0 18px 14px;padding:16px 18px;background:var(--card);border-radius:var(--r2);border:1px solid var(--border);}
+.tax-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:12.5px;}
+.tax-row:not(:last-child){border-bottom:1px solid var(--border);}
+.tax-key{color:var(--text3);font-weight:500;}
+.tax-val{font-weight:700;color:var(--text1);font-family:'DM Mono',monospace;}
+.tax-val.point{color:var(--point);}.tax-val.green{color:var(--g1);}
+.cumul-div-card{margin:0 18px 16px;padding:20px;border-radius:var(--r3);background:linear-gradient(135deg,#003A22,#005A3C);position:relative;overflow:hidden;}
+.cumul-div-card::after{content:'💰';position:absolute;bottom:-10px;right:16px;font-size:60px;opacity:.08;}
+.cumul-div-lbl{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:6px;}
+.cumul-div-val{font-size:36px;font-weight:800;color:white;font-family:'DM Mono',monospace;line-height:1;}
+.cumul-div-val .won{font-size:20px;font-weight:700;}
+.cumul-div-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:8px;}
+
+/* STO DETAIL */
+.detail-screen{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.2,0.8,0.2,1);}
+.detail-screen.show{transform:translateX(0);}
+.ds-hdr{height:var(--hdr-h);display:flex;align-items:center;padding:0 10px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ds-back{width:40px;height:40px;border:none;background:none;font-size:24px;cursor:pointer;color:var(--text1);}
+.ds-title{flex:1;text-align:center;font-size:16px;font-weight:800;padding-right:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ds-body{flex:1;overflow-y:auto;padding-bottom:20px;}
+.ds-summary{background:white;padding:20px 20px;text-align:center;border-bottom:1px solid var(--border);}
+.ds-price{font-size:34px;font-weight:800;font-family:'DM Mono',monospace;line-height:1;margin-bottom:6px;}
+.ds-change{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.ds-tabs{display:flex;background:white;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.ds-tab{flex:1;padding:14px 0;text-align:center;font-size:13.5px;font-weight:700;color:var(--text3);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
+.ds-tab.active{color:var(--text1);border-bottom-color:var(--g1);}
+.ds-content{display:none;padding:20px 18px;}
+.ds-content.active{display:block;}
+/* Price Chart */
+.price-chart-wrap{background:white;border:1px solid var(--border);border-radius:var(--r2);padding:16px;overflow:hidden;}
+.price-chart-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.pc-tab{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:700;border:1px solid var(--border);background:white;cursor:pointer;color:var(--text3);}
+.pc-tab.active{background:var(--g1);color:white;border-color:var(--g1);}
+.price-chart-canvas{width:100%;height:180px;position:relative;}
+.price-chart-canvas canvas{width:100%;height:100%;}
+/* Store list in detail */
+.ds-store-item{display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.ds-store-item:active{transform:scale(.98);background:var(--g-light);}
+.ds-store-icon{width:40px;height:40px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ds-store-info{flex:1;}
+.ds-store-name{font-size:13px;font-weight:700;color:var(--text1);}
+.ds-store-addr{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.ds-store-arrow{font-size:16px;color:var(--text4);flex-shrink:0;}
+/* Store detail popup */
+.store-detail-popup{position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+.store-detail-popup.show{opacity:1;pointer-events:auto;}
+.sdp-content{width:100%;max-width:430px;background:white;border-radius:24px 24px 0 0;padding:20px 20px 32px;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+.store-detail-popup.show .sdp-content{transform:translateY(0);}
+.sdp-handle{width:40px;height:5px;border-radius:3px;background:#D0DDD8;margin:0 auto 16px;}
+.sdp-name{font-size:18px;font-weight:800;color:var(--text1);margin-bottom:4px;}
+.sdp-cat{font-size:12px;color:var(--text3);margin-bottom:16px;}
+.sdp-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.sdp-row:last-child{border-bottom:none;}
+.sdp-key{color:var(--text3);font-weight:500;}
+.sdp-val{color:var(--text1);font-weight:700;}
+.comm-list{display:flex;flex-direction:column;gap:16px;}
+.comm-item{display:flex;gap:12px;}
+.comm-avatar{width:36px;height:36px;border-radius:50%;background:var(--g-light);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.comm-body{flex:1;background:white;padding:14px;border-radius:4px 16px 16px 16px;border:1px solid var(--border);box-shadow:var(--s1);}
+.comm-user{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between;}
+.comm-time{color:var(--text4);font-weight:400;font-size:10px;}
+.comm-txt{font-size:13.5px;color:var(--text1);line-height:1.5;}
+.ds-fixed-bottom{position:fixed;bottom:0;left:0;width:100%;padding:12px 18px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:white;border-top:1px solid var(--border);display:flex;gap:10px;z-index:100;}
+.ds-btn{flex:1;padding:15px 8px;border-radius:12px;font-size:13.5px;font-weight:800;border:none;cursor:pointer;color:white;transition:transform .15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.ds-btn:active{transform:scale(0.97);}
+.ds-btn.sell{background:var(--down-color);}.ds-btn.buy{background:var(--up-color);}
+
+/* BOTTOM SHEETS & TOAST & FAB */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+.sheet-overlay.show{opacity:1;pointer-events:auto;}
+.bottom-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:430px;background:white;border-radius:24px 24px 0 0;z-index:401;transition:transform .3s cubic-bezier(0.2,0.8,0.2,1);padding-bottom:env(safe-area-inset-bottom, 20px);display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,0.15);}
+.bottom-sheet.show{transform:translateX(-50%) translateY(0);}
+.sheet-handle{width:40px;height:5px;border-radius:3px;background:#D0DDD8;margin:12px auto 16px;}
+.sheet-body{padding:0 20px 20px;}
+.fab{position:fixed;bottom:calc(var(--nav-h) + 18px);right:20px;width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--g1),var(--g3));color:white;font-size:20px;box-shadow:0 4px 16px rgba(0,140,94,.35);display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:90;}
+.fab:active{transform:scale(.92);}
+.fab.spin .fab-icon{animation:spin 1s linear;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fab-icon{transition:transform .3s;}
+.toast{position:fixed;bottom:calc(var(--nav-h) + 14px);left:50%;transform:translateX(-50%) translateY(20px);background:#1A2A20;color:white;padding:11px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<script>
+const DATA = {
+  user: { name:"김하나", initial:"김", grade:"VIP" },
+  wallet: { cash: 1500000, totalAsset: 0 },
+  basket: {
+    id:'sto1', name:"서울 강북구 음식점 STO", share:2.34, tokens:234,
+    totalVal:3_250_000, returnRate:7.8,
+    targetSales:28_000_000, currentSales:31_360_000, achieveRate:112,
+    totalDividend:127_440, thisMonthDiv:42_480
+  },
+  myStos: [{ id:'sto1', tokens:234 }],
+  market: [
+    { id:'sto1', name:"서울 강북구 음식점 STO", category:"외식업 · 서울", price:10500, change:500, changePct:5.0, yield:7.8, icon:"🍲", region:"서울", sector:"외식업",
+      desc:"수유동, 번동, 미아동 일대의 우수 음식점 매출을 통합하여 안정적인 배당을 지급하는 펀드입니다.",
+      stores:[
+        {name:"우이동 로스터리",icon:"☕",addr:"서울 강북구 우이동 234-5",hours:"09:00~22:00",cat:"카페"},
+        {name:"번동 청년 식당",icon:"🍱",addr:"서울 강북구 번동 12-8",hours:"11:00~21:00",cat:"식당"},
+        {name:"삼각산 베이커리",icon:"🥐",addr:"서울 강북구 삼각산동 67-3",hours:"08:00~20:00",cat:"베이커리"},
+        {name:"수유동 쌀국수",icon:"🍲",addr:"서울 강북구 수유동 45-1",hours:"10:30~21:30",cat:"식당"},
+        {name:"4.19민주묘지역 카페",icon:"☕",addr:"서울 강북구 우이동 180-2",hours:"10:00~22:00",cat:"카페"},
+        {name:"미아사거리 고깃집",icon:"🥩",addr:"서울 강북구 미아동 90-7",hours:"16:00~24:00",cat:"식당"},
+        {name:"인수동 브런치",icon:"🥞",addr:"서울 강북구 인수동 33-2",hours:"09:00~17:00",cat:"카페"},
+        {name:"솔밭공원 디저트",icon:"🍰",addr:"서울 강북구 우이동 210-1",hours:"11:00~21:00",cat:"카페"},
+        {name:"강북구청 백반집",icon:"🍚",addr:"서울 강북구 수유동 78-5",hours:"11:00~15:00",cat:"식당"},
+        {name:"수유시장 손만두",icon:"🥟",addr:"서울 강북구 수유동 120-3",hours:"10:00~20:00",cat:"식당"}
+      ]},
+    { id:'sto2', name:"서울 마포구 카페 STO", category:"카페 · 서울", price:9800, change:-200, changePct:-2.0, yield:6.5, icon:"☕", region:"서울", sector:"카페",
+      desc:"연남동, 합정동 카페거리의 통합 매출 기반 배당 펀드입니다.",
+      stores:[{name:"연남동 핸드드립",icon:"☕",addr:"서울 마포구 연남동 228-1",hours:"09:00~22:00",cat:"카페"},{name:"합정 디저트바",icon:"🍰",addr:"서울 마포구 합정동 412-3",hours:"11:00~22:00",cat:"카페"}]},
+    { id:'sto3', name:"부산 해운대 맛집 STO", category:"외식업 · 부산", price:11200, change:800, changePct:7.7, yield:8.2, icon:"🐟", region:"부산", sector:"외식업",
+      desc:"해운대, 광안리 일대 해산물 맛집 통합 펀드입니다.",
+      stores:[{name:"해운대 회센터",icon:"🐟",addr:"부산 해운대구 중동 1234",hours:"10:00~22:00",cat:"식당"},{name:"광안리 조개구이",icon:"🦪",addr:"부산 수영구 광안동 56-2",hours:"15:00~24:00",cat:"식당"}]},
+    { id:'sto4', name:"제주 서귀포 카페 STO", category:"카페 · 제주", price:8500, change:350, changePct:4.3, yield:7.1, icon:"🌴", region:"제주", sector:"카페",
+      desc:"서귀포 해안 카페거리의 관광객 매출 기반 배당 펀드입니다.",
+      stores:[{name:"서귀포 오션뷰 카페",icon:"🌴",addr:"제주 서귀포시 색달동 2800",hours:"09:00~21:00",cat:"카페"}]},
+    { id:'sto5', name:"대구 동성로 외식 STO", category:"외식업 · 대구", price:7200, change:-150, changePct:-2.0, yield:5.8, icon:"🍗", region:"대구", sector:"외식업",
+      desc:"동성로 상권 외식업 통합 매출 기반 배당 펀드입니다.",
+      stores:[{name:"동성로 치킨집",icon:"🍗",addr:"대구 중구 동성로 45-2",hours:"15:00~02:00",cat:"식당"}]},
+    { id:'sto6', name:"경기 판교 IT단지 STO", category:"복합 · 경기", price:12800, change:1200, changePct:10.3, yield:5.8, icon:"💼", region:"경기", sector:"복합",
+      desc:"판교 테크노밸리 주변 상권 통합 매출 기반 펀드입니다.",
+      stores:[{name:"판교 샐러드바",icon:"🥗",addr:"경기 성남시 분당구 판교동 681",hours:"11:00~15:00",cat:"식당"}]},
+    { id:'sto7', name:"인천 송도 브런치 STO", category:"카페 · 인천", price:8900, change:200, changePct:2.3, yield:6.2, icon:"🥞", region:"인천", sector:"카페",
+      desc:"송도 국제도시 브런치 카페 통합 매출 기반 펀드입니다.",
+      stores:[{name:"송도 브런치하우스",icon:"🥞",addr:"인천 연수구 송도동 24-8",hours:"09:00~17:00",cat:"카페"}]},
+    { id:'sto8', name:"광주 충장로 외식 STO", category:"외식업 · 광주", price:6800, change:450, changePct:7.1, yield:7.5, icon:"🍜", region:"광주", sector:"외식업",
+      desc:"충장로 먹자골목 통합 매출 기반 배당 펀드입니다.",
+      stores:[{name:"충장로 국밥집",icon:"🍜",addr:"광주 동구 충장로 123",hours:"06:00~21:00",cat:"식당"}]},
+    { id:'sto9', name:"강원 속초 해산물 STO", category:"외식업 · 강원", price:9100, change:-300, changePct:-3.2, yield:6.8, icon:"🦀", region:"강원", sector:"외식업",
+      desc:"속초 중앙시장 해산물 상권 통합 매출 기반 펀드입니다.",
+      stores:[{name:"속초 대게집",icon:"🦀",addr:"강원 속초시 중앙동 456",hours:"10:00~21:00",cat:"식당"}]},
+    { id:'sto10', name:"전남 여수 카페 STO", category:"카페 · 전남", price:7600, change:600, changePct:8.6, yield:8.0, icon:"🌊", region:"전남", sector:"카페",
+      desc:"여수 해안 카페거리 통합 매출 기반 배당 펀드입니다.",
+      stores:[{name:"여수 바다뷰 카페",icon:"🌊",addr:"전남 여수시 돌산읍 900",hours:"10:00~22:00",cat:"카페"}]},
+    { id:'sto11', name:"충남 대전 빵집 STO", category:"베이커리 · 대전", price:8200, change:100, changePct:1.2, yield:5.5, icon:"🥐", region:"대전", sector:"베이커리",
+      desc:"대전 성심당 상권 베이커리 통합 매출 기반 펀드입니다.",
+      stores:[{name:"대전역 빵카페",icon:"🥐",addr:"대전 동구 정동 1-1",hours:"07:00~22:00",cat:"베이커리"}]},
+    { id:'sto12', name:"울산 태화강 맛집 STO", category:"외식업 · 울산", price:7400, change:280, changePct:3.9, yield:6.3, icon:"🍖", region:"울산", sector:"외식업",
+      desc:"태화강 십리대밭 상권 외식업 통합 매출 기반 펀드입니다.",
+      stores:[{name:"태화강 한우집",icon:"🍖",addr:"울산 중구 태화동 77",hours:"11:30~22:00",cat:"식당"}]},
+  ],
+  top10: {
+    dividend: [
+      {id:'sto3'},{id:'sto10'},{id:'sto1'},{id:'sto8'},{id:'sto4'},
+      {id:'sto9'},{id:'sto2'},{id:'sto12'},{id:'sto7'},{id:'sto6'}
+    ],
+    rising: [
+      {id:'sto6'},{id:'sto10'},{id:'sto3'},{id:'sto8'},{id:'sto1'},
+      {id:'sto4'},{id:'sto12'},{id:'sto7'},{id:'sto11'},{id:'sto5'}
+    ],
+    volume: [
+      {id:'sto1',vol:52340},{id:'sto3',vol:48210},{id:'sto6',vol:41870},
+      {id:'sto2',vol:38920},{id:'sto4',vol:32100},{id:'sto10',vol:28450},
+      {id:'sto8',vol:24300},{id:'sto9',vol:21800},{id:'sto7',vol:18950},{id:'sto12',vol:15400}
+    ]
+  },
+  community: [
+    {user:"배당개미",time:"10분 전",txt:"방문객 수 엄청 늘었네요. 이번 달 배당금 역대급일 듯."},
+    {user:"김철수",time:"1시간 전",txt:"어제 저녁에 방문했는데 사람 진짜 많더라고요 ㅋㅋㅋ"},
+    {user:"투자왕",time:"어제",txt:"요즘 이 상권 살아나는 게 눈에 확실히 보입니다."}
+  ],
+  // 주주맵용 강북구 매장 데이터
+  stores: [
+    {id:1,name:"우이동 로스터리",icon:"☕",status:"open",statusTxt:"영업중 · 바쁨",weekSales:5_280_000,todaySales:388_000,isTop:true,lat:37.652,lng:127.011,addr:"서울 강북구 우이동",cat:"카페"},
+    {id:2,name:"번동 청년 식당",icon:"🍱",status:"busy",statusTxt:"영업중 · 혼잡",weekSales:4_920_000,todaySales:312_000,isTop:false,lat:37.635,lng:127.034,addr:"서울 강북구 번동",cat:"식당"},
+    {id:3,name:"삼각산 베이커리",icon:"🥐",status:"open",statusTxt:"영업중",weekSales:3_740_000,todaySales:198_000,isTop:false,lat:37.645,lng:127.017,addr:"서울 강북구 삼각산동",cat:"카페"},
+    {id:4,name:"수유동 쌀국수",icon:"🍲",status:"open",statusTxt:"영업중",weekSales:2_980_000,todaySales:145_000,isTop:false,lat:37.638,lng:127.027,addr:"서울 강북구 수유동",cat:"식당"},
+    {id:5,name:"4.19민주묘지역 카페",icon:"☕",status:"open",statusTxt:"영업중",weekSales:2_450_000,todaySales:120_000,isTop:false,lat:37.649,lng:127.013,addr:"서울 강북구 우이동",cat:"카페"},
+    {id:6,name:"미아사거리 고깃집",icon:"🥩",status:"busy",statusTxt:"영업중 · 혼잡",weekSales:6_100_000,todaySales:450_000,isTop:true,lat:37.613,lng:127.030,addr:"서울 강북구 미아동",cat:"식당"},
+    {id:7,name:"인수동 브런치",icon:"🥞",status:"open",statusTxt:"영업중",weekSales:3_100_000,todaySales:150_000,isTop:false,lat:37.640,lng:127.010,addr:"서울 강북구 인수동",cat:"카페"},
+    {id:8,name:"솔밭공원 디저트",icon:"🍰",status:"open",statusTxt:"영업중",weekSales:2_800_000,todaySales:130_000,isTop:false,lat:37.648,lng:127.015,addr:"서울 강북구 우이동",cat:"카페"},
+    {id:9,name:"강북구청 백반집",icon:"🍚",status:"busy",statusTxt:"영업중 · 바쁨",weekSales:4_200_000,todaySales:280_000,isTop:false,lat:37.639,lng:127.025,addr:"서울 강북구 수유동",cat:"식당"},
+    {id:10,name:"수유시장 손만두",icon:"🥟",status:"open",statusTxt:"영업중",weekSales:2_100_000,todaySales:95_000,isTop:false,lat:37.632,lng:127.024,addr:"서울 강북구 수유동",cat:"식당"},
+  ],
+  weekly: [
+    {day:"월",sales:18_800_000},{day:"화",sales:21_200_000},{day:"수",sales:19_600_000},
+    {day:"목",sales:24_800_000},{day:"금",sales:28_100_000},{day:"토",sales:36_200_000},
+    {day:"일·오늘",sales:16_240_000,today:true}
+  ],
+  transactions: [
+    {type:'buy',name:'서울 강북구 음식점 STO',date:'2025.03.15',amount:234,price:10200,total:2_386_800},
+    {type:'dividend',name:'2월 배당금 입금',date:'2025.02.25',amount:null,price:null,total:41_880},
+    {type:'dividend',name:'1월 배당금 입금',date:'2025.01.25',amount:null,price:null,total:38_240},
+  ],
+  dividendHistory: [
+    {month:3,year:2025,title:'3월 배당금 (예정)',date:'2025.03.25 예정',amount:42_480,status:'pending'},
+    {month:2,year:2025,title:'2월 배당금',date:'2025.02.25 지급완료',amount:41_880,status:'done'},
+    {month:1,year:2025,title:'1월 배당금',date:'2025.01.25 지급완료',amount:38_240,status:'done'},
+  ],
+  tax:{totalIncome:122_600,withheld:18_880,net:103_720,hanaMoneyEarned:28_400},
+  membership:{visits:23,hanaMoneyTotal:28_400,savedAmount:41_500},
+  watchlist:['sto1','sto3','sto10'],
+};
+function updateWalletTotal(){let t=0;DATA.myStos.forEach(ms=>{const m=DATA.market.find(x=>x.id===ms.id);if(m)t+=ms.tokens*m.price;});DATA.wallet.totalAsset=t;}
+updateWalletTotal();
+</script>
+
+<div class="app-wrap" id="app">
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-avatar" id="hdrAvatar"></div>
+      <div><div class="hdr-name" id="hdrName"></div></div>
+    </div>
+    <div class="hdr-right">
+      <div style="text-align:right;margin-right:6px;">
+        <div class="hdr-asset-lbl">투자 가능 예수금</div>
+        <div class="hdr-asset-val" id="hdrCash"></div>
+      </div>
+      <button class="search-btn" onclick="openSearch()" title="STO 검색">🔍</button>
+    </div>
+  </header>
+
+  <!-- ① HOME -->
+  <section class="screen active" id="screen-home">
+    <div class="hero">
+      <div class="hero-top">
+        <div><div class="hero-lbl">나의 대표 STO</div><div class="hero-basket-name" id="heroBasketName"></div></div>
+        <div class="hero-badge" id="heroBadge"></div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-lbl">보유 토큰</div><div class="hero-stat-val" id="heroTokens"></div></div>
+        <div><div class="hero-stat-lbl">포트폴리오 지분율</div><div class="hero-stat-val pct" id="heroShare"></div></div>
+        <div><div class="hero-stat-lbl">누적 수익률</div><div class="hero-stat-val up" id="heroReturn"></div></div>
+      </div>
+    </div>
+    <div class="dividend-card"><div class="dividend-inner">
+      <div class="div-lbl"><div class="live-dot"></div>배당금<span style="font-size:9.5px;background:var(--bg);color:var(--text3);padding:2px 6px;border-radius:4px;font-weight:600;">실시간</span></div>
+      <div class="div-amount"><span class="won">₩</span><span id="divCounter">0</span></div>
+      <div class="div-sub"><div class="div-sub-txt">모든 편입 매장의 결제가 1원 단위로 실시간 반영</div></div>
+    </div></div>
+    <div class="sep"></div>
+    <div class="stitle"><h3>💼 내 보유 STO 포트폴리오</h3><span class="tag green">실시간 연동</span></div>
+    <div class="market-list" id="myStoList" style="padding-bottom:0;"></div>
+    <div class="sep" style="margin-top:16px;"></div>
+    <div class="stitle"><h3>🏆 STO TOP 10</h3><span class="tag red">LIVE</span></div>
+    <div class="top10-tabs" id="top10Tabs">
+      <div class="top10-tab active" onclick="switchTop10('dividend',this)">배당률순</div>
+      <div class="top10-tab" onclick="switchTop10('rising',this)">상승률순</div>
+      <div class="top10-tab" onclick="switchTop10('volume',this)">거래량순</div>
+    </div>
+    <div class="top10-list" id="top10List"></div>
+  </section>
+
+  <!-- ② 발견 -->
+  <section class="screen" id="screen-discover">
+    <div class="discover-header"><h2>STO 발견</h2><p>업종별, 지역별로 원하는 STO를 찾아보세요</p></div>
+    <div class="discover-filter-bar">
+      <div class="discover-tabs" id="discoverTabs">
+        <div class="discover-tab active" onclick="switchDiscoverMode('sector',this)">업종별</div>
+        <div class="discover-tab" onclick="switchDiscoverMode('region',this)">지역별</div>
+      </div>
+      <div class="discover-sort" id="discoverSort" onclick="toggleDiscoverSort()"><span id="discoverSortLabel">배당률순</span> ▾</div>
+    </div>
+    <div class="region-chips" id="discoverChips"></div>
+    <div class="discover-list" id="discoverList"></div>
+  </section>
+
+  <!-- ③ 관심종목 -->
+  <section class="screen" id="screen-watchlist">
+    <div style="padding:20px 18px 10px;"><h2 style="font-size:22px;font-weight:800;color:var(--text1);">관심종목</h2><p style="font-size:12.5px;color:var(--text3);margin-top:4px;">내가 관심 있는 STO를 모아보세요</p></div>
+    <div class="market-list" id="watchlistItems"></div>
+    <div style="text-align:center;padding:16px;"><div style="font-size:12px;color:var(--text4);">종목 상세에서 ⭐ 버튼으로 관심종목을 추가하세요</div></div>
+  </section>
+
+  <!-- ④ 통합매출 -->
+  <section class="screen" id="screen-sales">
+    <div class="sales-hero">
+      <div class="sales-month" id="salesMonth"></div>
+      <div class="sales-total-lbl">포트폴리오 지점 합산 매출</div>
+      <div class="sales-total-val" id="salesTotalVal"></div>
+      <div class="sales-badge" id="salesBadge"></div>
+    </div>
+    <div class="progress-card">
+      <div class="prog-header"><div class="prog-title">이번 달 배당 목표 달성률</div><div class="prog-pct-badge" id="progPctBadge"></div></div>
+      <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"><div class="prog-marker" style="right:-14px;position:absolute;top:50%;transform:translateY(-50%);">🎯</div></div></div>
+      <div class="prog-labels" id="progLabels"></div>
+      <div class="prog-extra"><div class="prog-extra-icon">🎉</div><div class="prog-extra-txt">합산 목표 초과달성! 배당률 +0.8%p 스마트 컨트랙트 발동</div></div>
+    </div>
+    <div class="weekly-chart">
+      <div class="sec-title">📊 합산 일별 매출 현황 (이번 주)</div>
+      <div class="chart-bars" id="chartBars"></div>
+      <div style="display:flex;gap:6px;justify-content:center;font-size:10.5px;color:var(--text3);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--g1);display:inline-block;"></span>합산 매출</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--point);display:inline-block;"></span>오늘</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 주주맵 -->
+  <section class="screen map-screen" id="screen-map">
+    <div style="padding:14px 18px 0;">
+      <div class="membership-card">
+        <div class="mc-label">👑 주주 전용 O2O 멤버십</div>
+        <div class="mc-title">내가 투자한 포트폴리오, 내가 방문한다!</div>
+        <div class="mc-stats">
+          <div><div class="mc-stat-lbl">방문 횟수</div><div class="mc-stat-val" id="mcVisits"></div></div>
+          <div><div class="mc-stat-lbl">수집 ESG 스탬프</div><div class="mc-stat-val accent" id="mcMoney"></div></div>
+          <div><div class="mc-stat-lbl">누적 할인 금액</div><div class="mc-stat-val" id="mcSaved"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="map-top-bar">
+      <div class="map-top-row">
+        <div class="mpill on" onclick="filterMapStores('all',this)">전체</div>
+        <div class="mpill" onclick="filterMapStores('카페',this)">카페</div>
+        <div class="mpill" onclick="filterMapStores('식당',this)">식당</div>
+      </div>
+      <div class="benefit-chip">💰 상시 5% 할인 + 🍃 ESG 스탬프</div>
+    </div>
+    <div class="map-svg-wrap" id="mapWrap">
+      <svg class="map-svg" viewBox="0 0 360 280" id="mapSvg"></svg>
+      <div class="marker-popup" id="markerPopup"><div class="mp-box" id="markerPopupBox"></div></div>
+    </div>
+    <div class="stitle" style="margin-top:4px;"><h3>📍 강북구 음식점 STO 구성매장</h3></div>
+    <div class="map-store-list" id="mapStoreList"></div>
+    <div style="height:12px;"></div>
+  </section>
+
+  <!-- ⑥ 자산 -->
+  <section class="screen" id="screen-asset">
+    <div class="wallet-card">
+      <div class="wallet-lbl">내 하나은행 계좌 연동 예수금</div>
+      <div class="wallet-amt" id="walletCashText">0</div>
+    </div>
+    <div style="padding:0 18px;margin-top:16px;"><h3 style="font-size:15px;font-weight:800;margin-bottom:12px;">자산 요약</h3></div>
+    <div class="portfolio-summary">
+      <div class="ps-box"><div class="ps-lbl">보유 STO 가치</div><div class="ps-val" id="walletStoTotal">0</div></div>
+      <div class="ps-box"><div class="ps-lbl">총 자산 (예수금 포함)</div><div class="ps-val" id="walletGrandTotal">0</div></div>
+    </div>
+    <div class="sep" style="margin:0 -18px 16px;"></div>
+    <div class="asset-section"><div class="asset-section-title">📋 거래 내역</div><div id="txHistoryList"></div></div>
+    <div class="sep" style="margin:0 -18px 16px;"></div>
+    <div style="padding:0 18px 12px;"><div class="asset-section-title">💰 누적 배당금</div></div>
+    <div class="cumul-div-card">
+      <div class="cumul-div-lbl">현재까지 누적 배당금 합계</div>
+      <div class="cumul-div-val"><span class="won">₩</span><span id="cumulDivTotal">0</span></div>
+      <div class="cumul-div-sub">2025.01 ~ 현재 | 원천징수 후 실수령 기준</div>
+    </div>
+    <div class="asset-section"><div id="divHistoryList"></div></div>
+    <div class="sep" style="margin:0 -18px 16px;"></div>
+    <div class="stitle"><h3>📋 세금 신고 자료</h3><span class="tag gold">2025년</span></div>
+    <div class="tax-card" id="taxCard"></div>
+    <div style="padding:0 18px 8px;font-size:11.5px;color:var(--text3);line-height:1.8;">※ 본 내역은 금융소득 종합과세 신고 시 활용하실 수 있습니다.<br>※ 배당소득세 15.4% 자동 공제 후 스마트 컨트랙트로 지급됩니다.</div>
+  </section>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="goTab('home',this)" id="nav-home"><span class="ni">🏠</span>홈</button>
+    <button class="nav-btn" onclick="goTab('discover',this)" id="nav-discover"><span class="ni">🔎</span>발견</button>
+    <button class="nav-btn" onclick="goTab('watchlist',this)" id="nav-watchlist"><span class="ni">⭐</span>관심종목</button>
+    <button class="nav-btn" onclick="goTab('sales',this)" id="nav-sales"><span class="ni">⚡</span>통합매출</button>
+    <button class="nav-btn" onclick="goTab('map',this)" id="nav-map"><span class="ni">📍</span>주주맵</button>
+    <button class="nav-btn" onclick="goTab('asset',this)" id="nav-asset"><span class="ni">💳</span>자산</button>
+  </nav>
+</div>
+
+<!-- STO DETAIL -->
+<div class="detail-screen" id="detailScreen">
+  <div class="ds-hdr"><button class="ds-back" onclick="closeDetail()">←</button><div class="ds-title" id="dsTitle">종목명</div></div>
+  <div class="ds-body">
+    <div class="ds-summary"><div class="ds-price" id="dsPrice">0</div><div class="ds-change" id="dsChange">0 (0%)</div></div>
+    <div class="ds-tabs">
+      <div class="ds-tab active" onclick="switchDsTab(0,this)">차트</div>
+      <div class="ds-tab" onclick="switchDsTab(1,this)">종목 정보</div>
+      <div class="ds-tab" onclick="switchDsTab(2,this)">주주방 (💬)</div>
+    </div>
+    <div class="ds-content active" id="dsTab0">
+      <div class="price-chart-wrap">
+        <div class="price-chart-tabs">
+          <div class="pc-tab active" onclick="drawChart('1W',this)">1주</div>
+          <div class="pc-tab" onclick="drawChart('1M',this)">1개월</div>
+          <div class="pc-tab" onclick="drawChart('3M',this)">3개월</div>
+          <div class="pc-tab" onclick="drawChart('1Y',this)">1년</div>
+        </div>
+        <div class="price-chart-canvas"><canvas id="priceChartCanvas"></canvas></div>
+      </div>
+    </div>
+    <div class="ds-content" id="dsTab1">
+      <div style="background:var(--card);border:1px solid var(--border);padding:16px;border-radius:var(--r2);margin-bottom:16px;">
+        <h4 style="font-size:14px;font-weight:800;margin-bottom:8px;">사업 개요</h4>
+        <p style="font-size:12.5px;color:var(--text3);line-height:1.6;" id="dsDesc"></p>
+      </div>
+      <div style="margin-bottom:16px;">
+        <h4 style="font-size:14px;font-weight:800;margin-bottom:12px;">📍 구성 매장</h4>
+        <div id="dsStoreList"></div>
+      </div>
+      <button style="width:100%;padding:14px;border-radius:12px;background:var(--g-light);color:var(--g2);font-weight:700;border:none;cursor:pointer;" onclick="showToast('증권신고서 및 백서 PDF 다운로드가 시작됩니다.')">📄 증권신고서 및 백서 열람</button>
+    </div>
+    <div class="ds-content" id="dsTab2"><div class="comm-list" id="dsCommList"></div></div>
+  </div>
+
+</div>
+
+<!-- 거래소 팝업 -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeExchangePopup()"></div>
+<div class="bottom-sheet" id="exchangeSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:6px;text-align:center;" id="esActionText">거래소에서 매수하기</h3>
+    <p style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px;" id="esSubText">외부 공인 거래소로 이동합니다</p>
+    <div style="background:var(--g-light);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">ℹ️</span>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;font-weight:500;">해당 STO 토큰은 <strong>공인 외부 거래소</strong>에서 거래됩니다.<br>아래 거래소를 선택해 이동해주세요.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;" id="esExchangeList"></div>
+    <button style="width:100%;padding:14px;border-radius:var(--r2);background:var(--bg);color:var(--text3);font-size:14px;font-weight:700;border:1px solid var(--border);cursor:pointer;" onclick="closeExchangePopup()">취소</button>
+  </div>
+</div>
+
+<!-- 매장 상세 팝업 -->
+<div class="store-detail-popup" id="storeDetailPopup" onclick="if(event.target===this)closeStorePopup()">
+  <div class="sdp-content">
+    <div class="sdp-handle"></div>
+    <div id="storeDetailBody"></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-top">
+    <input class="search-input" id="searchInput" type="text" placeholder="STO 종목명, 지역, 업종 검색..." oninput="doSearch(this.value)">
+    <button class="search-cancel" onclick="closeSearch()">취소</button>
+  </div>
+  <div class="search-results" id="searchResults"><div class="search-empty">검색어를 입력하세요</div></div>
+</div>
+
+<button class="fab" id="fab" onclick="onFab()"><span class="fab-icon">↻</span></button>
+<div class="toast" id="toast"></div>
+
+<script>
+let toastTimer;
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2500);}
+function fmt(n){if(n>=10000000)return(n/10000000).toFixed(1)+'천만';if(n>=10000)return Math.round(n/10000).toLocaleString()+'만원';return n.toLocaleString()+'원';}
+function fmtW(n){return'₩'+n.toLocaleString();}
+function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(2)+'M';if(n>=10000)return(n/10000).toFixed(1)+'만';return n.toLocaleString();}
+function countUp(el,target,duration=1200,prefix='',suffix=''){let startTime=null;function step(ts){if(!startTime)startTime=ts;const p=Math.min((ts-startTime)/duration,1);const ease=1-Math.pow(1-p,3);el.textContent=prefix+Math.floor(ease*target).toLocaleString()+suffix;if(p<1)requestAnimationFrame(step);else el.textContent=prefix+target.toLocaleString()+suffix;}requestAnimationFrame(step);}
+
+// SEARCH
+function openSearch(){document.getElementById('searchOverlay').classList.add('show');setTimeout(()=>document.getElementById('searchInput').focus(),300);}
+function closeSearch(){document.getElementById('searchOverlay').classList.remove('show');document.getElementById('searchInput').value='';document.getElementById('searchResults').innerHTML='<div class="search-empty">검색어를 입력하세요</div>';}
+function doSearch(q){const res=document.getElementById('searchResults');if(!q.trim()){res.innerHTML='<div class="search-empty">검색어를 입력하세요</div>';return;}
+const filtered=DATA.market.filter(m=>m.name.includes(q)||m.category.includes(q)||m.region.includes(q)||(m.sector&&m.sector.includes(q)));
+if(!filtered.length){res.innerHTML='<div class="search-empty">검색 결과가 없습니다</div>';return;}
+res.innerHTML=filtered.map(m=>{let cc='',s='';if(m.change>0){cc='c-up';s='▲';}else if(m.change<0){cc='c-down';s='▼';}
+return`<div class="search-item" onclick="closeSearch();openDetail('${m.id}')"><div class="search-item-icon">${m.icon}</div><div class="search-item-info"><div class="search-item-name">${m.name}</div><div class="search-item-cat">${m.category} · 배당 ${m.yield}%</div></div><div class="search-item-price"><div class="p">${m.price.toLocaleString()}원</div><div class="c ${cc}">${s} ${Math.abs(m.changePct)}%</div></div></div>`;}).join('');}
+
+// ROUTING
+let currentTab='home';
+function goTab(tabId,btnEl){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('screen-'+tabId).classList.add('active');btnEl.classList.add('active');currentTab=tabId;
+if(tabId==='map')renderMap();if(tabId==='sales')document.querySelectorAll('.bar-inner').forEach(b=>{b.style.height=b.dataset.pct+'%';});if(tabId==='discover')renderDiscover();if(tabId==='watchlist')renderWatchlist();updateAllUI();}
+
+function updateAllUI(){updateWalletTotal();renderHeader();renderHome();renderMyStos();renderSales();renderAsset();}
+function renderHeader(){document.getElementById('hdrAvatar').textContent=DATA.user.initial;document.getElementById('hdrName').innerHTML=`${DATA.user.name}<small>${DATA.user.grade} 투자자</small>`;document.getElementById('hdrCash').textContent=DATA.wallet.cash.toLocaleString()+'원';}
+
+// HOME
+function renderHome(){const b=DATA.basket;document.getElementById('heroBasketName').textContent=b.name;document.getElementById('heroBadge').textContent=`통합지분 ${b.share}%`;document.getElementById('heroTokens').innerHTML=`${b.tokens.toLocaleString()} <span style="font-size:11px;opacity:.6">ST</span>`;document.getElementById('heroShare').textContent=b.share+'%';document.getElementById('heroReturn').textContent='+'+b.returnRate+'%';countUp(document.getElementById('divCounter'),b.thisMonthDiv,2000);renderTop10('dividend');}
+
+// TOP10
+let currentTop10='dividend';
+function switchTop10(type,el){currentTop10=type;document.querySelectorAll('.top10-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderTop10(type);}
+function renderTop10(type){const list=document.getElementById('top10List');const items=DATA.top10[type];
+list.innerHTML=items.map((item,idx)=>{const m=DATA.market.find(x=>x.id===item.id);if(!m)return'';let rc=idx<3?`rank-${idx+1}`:'';let vh='',sh='';
+if(type==='dividend'){vh=m.yield+'%';sh=`<div class="top10-sub c-up">배당률</div>`;}
+else if(type==='rising'){vh=(m.changePct>0?'+':'')+m.changePct+'%';sh=`<div class="top10-sub ${m.changePct>=0?'c-up':'c-down'}">${m.changePct>=0?'▲':'▼'} ${Math.abs(m.change).toLocaleString()}원</div>`;}
+else{vh=(item.vol||0).toLocaleString();sh=`<div class="top10-sub" style="color:var(--text3);">거래량</div>`;}
+return`<div class="top10-item ${rc}" onclick="openDetail('${m.id}')"><div class="top10-rank">${idx<3?['👑','🥈','🥉'][idx]:(idx+1)}</div><div class="top10-icon">${m.icon}</div><div class="top10-info"><div class="top10-name">${m.name}</div><div class="top10-cat">${m.category}</div></div><div class="top10-right"><div class="top10-val">${vh}</div>${sh}</div></div>`;}).join('');}
+
+function renderMyStos(){const list=document.getElementById('myStoList');if(!DATA.myStos.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text4);font-size:13px;font-weight:600;background:white;border-radius:14px;border:1px solid var(--border);">보유중인 STO가 없습니다.</div>';return;}
+list.innerHTML=DATA.myStos.map(ms=>{const mi=DATA.market.find(m=>m.id===ms.id);if(!mi)return'';const tv=ms.tokens*mi.price;let cc='';if(mi.change>0)cc='c-up';else if(mi.change<0)cc='c-down';
+return`<div class="market-item" onclick="openDetail('${ms.id}')"><div class="mkt-img">${mi.icon}</div><div class="mkt-info"><div class="mkt-title">${mi.name}</div><div class="mkt-cat"><span style="color:var(--text1);font-weight:800;">${ms.tokens.toLocaleString()}주</span> 보유</div></div><div class="mkt-price-wrap"><div class="mkt-price">${tv.toLocaleString()}원</div><div class="mkt-change ${cc}">현재가 ${mi.price.toLocaleString()}원</div></div></div>`;}).join('');}
+
+// 발견
+let discoverMode='sector',discoverSortBy='yield',discoverFilter='전체';
+const SECTORS=['전체','외식업','카페','베이커리'];
+const REGIONS=['전체','서울','부산','인천','대구','광주','대전','울산','강원','제주','전남'];
+function switchDiscoverMode(mode,el){discoverMode=mode;discoverFilter='전체';document.querySelectorAll('.discover-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderDiscover();}
+function toggleDiscoverSort(){discoverSortBy=discoverSortBy==='yield'?'price':'yield';document.getElementById('discoverSortLabel').textContent=discoverSortBy==='yield'?'배당률순':'가격순';renderDiscover();}
+function setDiscoverFilter(f,el){discoverFilter=f;document.querySelectorAll('.region-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderDiscoverList();}
+function renderDiscover(){const chips=document.getElementById('discoverChips');const items=discoverMode==='sector'?SECTORS:REGIONS;chips.innerHTML=items.map(c=>`<div class="region-chip ${c===discoverFilter?'active':''}" onclick="setDiscoverFilter('${c}',this)">${c}</div>`).join('');renderDiscoverList();}
+function renderDiscoverList(){
+// 발견 탭에서 판교 제외
+let filtered=DATA.market.filter(m=>m.id!=='sto6');
+if(discoverFilter!=='전체'){if(discoverMode==='sector')filtered=filtered.filter(m=>m.sector===discoverFilter);else filtered=filtered.filter(m=>m.region===discoverFilter);}
+if(discoverSortBy==='yield')filtered.sort((a,b)=>b.yield-a.yield);else filtered.sort((a,b)=>b.price-a.price);
+const list=document.getElementById('discoverList');if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text4);font-size:13px;">해당 조건의 STO가 없습니다</div>';return;}
+list.innerHTML=filtered.map(m=>{let cc='',s='';if(m.change>0){cc='c-up';s='▲';}else if(m.change<0){cc='c-down';s='▼';}
+const isWatched=DATA.watchlist.includes(m.id);
+return`<div class="discover-item"><div class="disc-img" onclick="openDetail('${m.id}')">${m.icon}</div><div class="disc-info" onclick="openDetail('${m.id}')"><div class="disc-title">${m.name}</div><div class="disc-cat">${m.category}</div></div><div class="disc-price-wrap" onclick="openDetail('${m.id}')"><div class="disc-price ${cc}">${m.price.toLocaleString()}원</div><div class="disc-change ${cc}">${s} ${Math.abs(m.change).toLocaleString()} (${m.change>0?'+':''}${m.changePct}%)</div><div class="disc-yield">배당 ${m.yield}%</div></div><div class="disc-star ${isWatched?'active':''}" onclick="toggleWatchlist('${m.id}',event)">${isWatched?'⭐':'☆'}</div></div>`;}).join('');}
+
+// 관심종목 토글
+function toggleWatchlist(id,event){event.stopPropagation();const idx=DATA.watchlist.indexOf(id);if(idx>=0){DATA.watchlist.splice(idx,1);showToast('관심종목에서 제거되었습니다');}else{DATA.watchlist.push(id);showToast('⭐ 관심종목에 추가되었습니다');}renderDiscoverList();renderWatchlist();}
+
+// 관심종목
+function renderWatchlist(){const list=document.getElementById('watchlistItems');if(!DATA.watchlist.length){list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text4);font-size:13px;background:white;border-radius:14px;border:1px solid var(--border);margin:0 18px;">관심종목이 없습니다.</div>';return;}
+list.innerHTML=DATA.watchlist.map(wid=>{const m=DATA.market.find(x=>x.id===wid);if(!m)return'';let cc='',s='';if(m.change>0){cc='c-up';s='▲';}else if(m.change<0){cc='c-down';s='▼';}
+return`<div class="market-item" onclick="openDetail('${m.id}')"><div class="mkt-img">${m.icon}</div><div class="mkt-info"><div class="mkt-title">${m.name}</div><div class="mkt-cat">${m.category}</div></div><div class="mkt-price-wrap"><div class="mkt-price ${cc}">${m.price.toLocaleString()}원</div><div class="mkt-change ${cc}">${s} ${Math.abs(m.change).toLocaleString()} (${m.change>0?'+':''}${m.changePct}%)</div><div class="mkt-yield">배당 ${m.yield}%</div></div></div>`;}).join('');}
+
+// SALES (매출 랭킹, 결제 스트림 삭제됨)
+function renderSales(){const b=DATA.basket,now=new Date();document.getElementById('salesMonth').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월`;
+setTimeout(()=>countUp(document.getElementById('salesTotalVal'),b.currentSales,1500,'₩'),200);
+document.getElementById('salesBadge').innerHTML=`🔥 전체 목표 대비 ${b.achieveRate}% 달성`;document.getElementById('progPctBadge').textContent=`${b.achieveRate}% 🚀`;document.getElementById('progLabels').innerHTML=`<span>현재 ${fmt(b.currentSales)}</span><span>목표 ${fmt(b.targetSales)}</span>`;
+setTimeout(()=>{document.getElementById('progFill').style.width=Math.min(b.achieveRate,100)+'%';},400);
+const maxS=Math.max(...DATA.weekly.map(w=>w.sales));
+document.getElementById('chartBars').innerHTML=DATA.weekly.map((w,i)=>`<div class="bar-wrap"><div class="bar-val" style="font-size:9px;color:${w.today?'var(--point)':'var(--text3)'}">${(w.sales/10000).toFixed(0)}만</div><div class="bar-outer" style="height:70px;"><div class="bar-inner ${w.today?'today':''}" style="height:0%;transition-delay:${i*0.08}s" data-pct="${Math.round(w.sales/maxS*100)}"></div></div><div class="bar-lbl ${w.today?'today':''}">${w.day.replace('·오늘','')}</div></div>`).join('');}
+
+// MAP
+let mapRendered=false,currentMapFilter='all';
+function filterMapStores(cat,el){currentMapFilter=cat;document.querySelectorAll('.mpill').forEach(p=>p.classList.remove('on'));el.classList.add('on');mapRendered=false;renderMap();}
+function renderMap(){if(mapRendered)return;mapRendered=true;
+const m=DATA.membership;countUp(document.getElementById('mcVisits'),m.visits,800,'','회');countUp(document.getElementById('mcMoney'),m.hanaMoneyTotal,1000,'','개');countUp(document.getElementById('mcSaved'),m.savedAmount,1000,'₩');
+const filtered=currentMapFilter==='all'?DATA.stores:DATA.stores.filter(s=>s.cat===currentMapFilter);
+const svg=document.getElementById('mapSvg');const W=360,H=280;
+const lats=filtered.map(s=>s.lat),lngs=filtered.map(s=>s.lng);
+const minLat=Math.min(...lats)-.002,maxLat=Math.max(...lats)+.002,minLng=Math.min(...lngs)-.002,maxLng=Math.max(...lngs)+.002;
+function proj(lat,lng){const pad=30;return{x:pad+(lng-minLng)/(maxLng-minLng||1)*(W-pad*2),y:H-pad-(lat-minLat)/(maxLat-minLat||1)*(H-pad*2)};}
+let svgH=`<defs><linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E2EFE6"/><stop offset="100%" stop-color="#D4E8DC"/></linearGradient><filter id="ms"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.2"/></filter><filter id="mg"><feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.4"/></filter></defs><rect width="${W}" height="${H}" fill="url(#bgGrad)"/>`;
+svgH+=`<text x="${W/2}" y="22" font-size="12" fill="#88AA98" text-anchor="middle" font-weight="600" font-family="'Noto Sans KR',sans-serif">🌲 북한산 국립공원</text>`;
+svgH+=`<line x1="20" y1="${H*0.75}" x2="${W-20}" y2="${H*0.75}" stroke="#C8D8D0" stroke-width="3" stroke-linecap="round"/><text x="${W/2}" y="${H*0.75+14}" font-size="9" fill="#A8C0B8" text-anchor="middle" font-weight="600">도봉로</text>`;
+svgH+=`<line x1="${W*0.5}" y1="35" x2="${W*0.5}" y2="${H-15}" stroke="#D0DDD8" stroke-width="2" stroke-linecap="round"/>`;
+filtered.forEach(s=>{const{x,y}=proj(s.lat,s.lng);const isTop=s.isTop;const r=isTop?18:14;
+svgH+=`<g onclick="openMarkerPopup(${s.id},${x.toFixed(1)},${y.toFixed(1)})" style="cursor:pointer">`;
+if(isTop)svgH+=`<circle cx="${x}" cy="${y}" r="${r+5}" fill="rgba(245,166,35,0.15)"><animate attributeName="r" values="${r+3};${r+8};${r+3}" dur="2s" repeatCount="indefinite"/></circle>`;
+svgH+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${isTop?'var(--gold)':'#008C5E'}" filter="url(#${isTop?'mg':'ms'})" stroke="white" stroke-width="2.5"/>`;
+svgH+=`<text x="${x}" y="${y+1}" font-size="13" text-anchor="middle" dominant-baseline="middle" style="pointer-events:none">${s.icon}</text>`;
+if(isTop)svgH+=`<text x="${x}" y="${y-r-3}" font-size="10" text-anchor="middle" style="pointer-events:none">👑</text>`;
+svgH+=`</g>`;});
+svg.innerHTML=svgH;
+document.getElementById('mapStoreList').innerHTML=filtered.map(s=>`<div class="map-store-item" onclick="openMarkerPopup(${s.id})"><div class="msi-icon">${s.icon}</div><div class="msi-body"><div class="msi-name">${s.name}</div><div class="msi-addr">${s.addr}</div><div class="msi-benefit">💳 하나카드 결제 시 상시 5% 할인 + 🍃ESG 스탬프</div></div><div class="msi-right"><div class="msi-today">오늘 매출</div><div class="msi-amount">${fmtK(s.todaySales)}</div></div></div>`).join('');}
+
+function openMarkerPopup(id,x,y){const s=DATA.stores.find(s=>s.id===id);if(!s)return;
+const box=document.getElementById('markerPopupBox');
+box.innerHTML=`<button class="mp-close" onclick="document.getElementById('markerPopup').classList.remove('vis')">✕</button><div class="mp-name">${s.icon} ${s.name}</div><div class="mp-benefit"><div class="mp-benefit-ico">💳</div><div class="mp-benefit-txt">👑 주주 혜택: 상시 5% 할인 및 ESG 스탬프</div></div><div class="mp-stats"><div class="mp-stat"><div class="mp-stat-lbl">오늘 매출</div><div class="mp-stat-val">${fmtK(s.todaySales)}</div></div><div class="mp-stat"><div class="mp-stat-lbl">이번 주</div><div class="mp-stat-val">${fmtK(s.weekSales)}</div></div><div class="mp-stat"><div class="mp-stat-lbl">상태</div><div class="mp-stat-val" style="font-size:12px;">${s.statusTxt}</div></div><div class="mp-stat"><div class="mp-stat-lbl">업종</div><div class="mp-stat-val" style="font-size:12px;">${s.cat}</div></div></div>`;
+const popup=document.getElementById('markerPopup');const wrap=document.getElementById('mapWrap');const wR=wrap.getBoundingClientRect();
+if(x!==undefined){const sX=wR.width/360,sY=(wR.height||280)/280;let left=x*sX-110,top=y*sY-190;left=Math.max(8,Math.min(left,wR.width-228));top=Math.max(8,top);popup.style.left=left+'px';popup.style.top=top+'px';popup.style.transform='none';}
+else{popup.style.left='50%';popup.style.top='30%';popup.style.transform='translate(-50%,-50%)';}
+popup.classList.add('vis');}
+
+// 자산
+function renderAsset(){document.getElementById('walletCashText').textContent=DATA.wallet.cash.toLocaleString()+'원';document.getElementById('walletStoTotal').textContent=DATA.wallet.totalAsset.toLocaleString()+'원';document.getElementById('walletGrandTotal').textContent=(DATA.wallet.cash+DATA.wallet.totalAsset).toLocaleString()+'원';
+document.getElementById('txHistoryList').innerHTML=DATA.transactions.map(tx=>{let ic='div-icon',ie='💰',ac='color:var(--g1)';if(tx.type==='buy'){ic='buy-icon';ie='📈';ac='color:var(--up-color)';}else if(tx.type==='sell'){ic='sell-icon';ie='📉';ac='color:var(--down-color)';}
+return`<div class="tx-history-item"><div class="tx-h-icon ${ic}">${ie}</div><div class="tx-h-body"><div class="tx-h-title">${tx.name}</div><div class="tx-h-date">${tx.date}${tx.amount?' · '+tx.amount+'주':''}</div></div><div class="tx-h-amount" style="${ac}">${tx.type==='buy'?'-':'+'} ${fmtW(tx.total)}</div></div>`;}).join('');
+const totalDiv=DATA.dividendHistory.filter(d=>d.status==='done').reduce((a,d)=>a+d.amount,0);countUp(document.getElementById('cumulDivTotal'),totalDiv,1200);
+document.getElementById('divHistoryList').innerHTML=DATA.dividendHistory.map(d=>`<div class="div-history-item"><div class="div-h-month"><div class="m">${d.month}</div><div class="lbl">월</div></div><div class="div-h-body"><div class="div-h-title">${d.title}</div><div class="div-h-date">${d.date}</div></div><div class="div-h-amount" style="${d.status==='pending'?'color:var(--text4)':''}">${d.status==='pending'?'예정 ':''}${fmtW(d.amount)}</div></div>`).join('');
+const t=DATA.tax;document.getElementById('taxCard').innerHTML=`<div style="font-size:12px;color:var(--text3);margin-bottom:10px;">하나금융 STO 배당소득세 원천징수 내역</div><div class="tax-row"><div class="tax-key">총 배당 지급액</div><div class="tax-val">${fmtW(t.totalIncome)}</div></div><div class="tax-row"><div class="tax-key">원천징수세 (15.4%)</div><div class="tax-val point">-${fmtW(t.withheld)}</div></div><div class="tax-row"><div class="tax-key">실수령액 합계</div><div class="tax-val green">${fmtW(t.net)}</div></div><div class="tax-row"><div class="tax-key">할인 혜택 받은 금액</div><div class="tax-val green">+${fmtW(t.hanaMoneyEarned)}</div></div>`;}
+
+// STO DETAIL
+let currentDetailId=null;
+function openDetail(stoId){const m=DATA.market.find(x=>x.id===stoId);if(!m)return;currentDetailId=stoId;
+let cc='',sign='';if(m.change>0){cc='c-up';sign='▲';}else if(m.change<0){cc='c-down';sign='▼';}
+document.getElementById('dsTitle').textContent=m.name;document.getElementById('dsPrice').textContent=m.price.toLocaleString();document.getElementById('dsPrice').className='ds-price '+cc;
+document.getElementById('dsChange').textContent=`어제보다 ${sign} ${Math.abs(m.change).toLocaleString()} (${m.change>0?'+':''}${m.changePct}%)`;document.getElementById('dsChange').className='ds-change '+cc;
+document.getElementById('dsDesc').textContent=m.desc;
+// 구성 매장 렌더링
+const storeList=document.getElementById('dsStoreList');
+if(m.stores&&m.stores.length){storeList.innerHTML=m.stores.map((s,i)=>`<div class="ds-store-item" onclick="openStorePopup('${stoId}',${i})"><div class="ds-store-icon">${s.icon}</div><div class="ds-store-info"><div class="ds-store-name">${s.name}</div><div class="ds-store-addr">${s.addr}</div></div><div class="ds-store-arrow">›</div></div>`).join('');}
+else{storeList.innerHTML='<div style="text-align:center;padding:20px;color:var(--text4);font-size:12px;">구성 매장 정보 없음</div>';}
+drawChart('1W',document.querySelector('.pc-tab.active')||document.querySelector('.pc-tab'));
+renderCommunity();switchDsTab(0,document.querySelectorAll('.ds-tab')[0]);document.getElementById('detailScreen').classList.add('show');}
+
+function closeDetail(){document.getElementById('detailScreen').classList.remove('show');currentDetailId=null;}
+function switchDsTab(idx,el){document.querySelectorAll('.ds-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.ds-content').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('dsTab'+idx).classList.add('active');}
+
+// Price Chart (Canvas)
+function drawChart(period,el){document.querySelectorAll('.pc-tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');
+const canvas=document.getElementById('priceChartCanvas');const ctx=canvas.getContext('2d');const dpr=window.devicePixelRatio||1;
+const rect=canvas.parentElement.getBoundingClientRect();canvas.width=rect.width*dpr;canvas.height=180*dpr;canvas.style.width=rect.width+'px';canvas.style.height='180px';ctx.scale(dpr,dpr);
+const W=rect.width,H=180;const m=DATA.market.find(x=>x.id===currentDetailId);if(!m)return;
+let points=[];const base=m.price;const days={' 1W':7,'1M':30,'3M':90,'1Y':365}[period]||7;
+// Generate realistic price data
+let price=base*(1-m.changePct/100*0.3);
+for(let i=0;i<=days;i++){price+=((Math.random()-.48)*base*0.015);points.push(price);}
+points[points.length-1]=base;
+const minP=Math.min(...points),maxP=Math.max(...points),range=maxP-minP||1;
+const isUp=points[points.length-1]>=points[0];
+ctx.clearRect(0,0,W,H);
+// Grid lines
+ctx.strokeStyle='#EEF3EF';ctx.lineWidth=1;
+for(let i=0;i<4;i++){const y=20+i*((H-40)/3);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+// Line
+const grad=ctx.createLinearGradient(0,0,0,H);
+if(isUp){grad.addColorStop(0,'rgba(242,61,61,0.15)');grad.addColorStop(1,'rgba(242,61,61,0)');}
+else{grad.addColorStop(0,'rgba(30,136,229,0.15)');grad.addColorStop(1,'rgba(30,136,229,0)');}
+ctx.beginPath();
+points.forEach((p,i)=>{const x=i/(points.length-1)*W;const y=H-20-(p-minP)/range*(H-40);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+const lastX=W,lastY=H-20-(points[points.length-1]-minP)/range*(H-40);
+// Fill
+ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+// Stroke
+ctx.beginPath();points.forEach((p,i)=>{const x=i/(points.length-1)*W;const y=H-20-(p-minP)/range*(H-40);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+ctx.strokeStyle=isUp?'#F23D3D':'#1E88E5';ctx.lineWidth=2;ctx.stroke();
+// End dot
+ctx.beginPath();ctx.arc(lastX,lastY,4,0,Math.PI*2);ctx.fillStyle=isUp?'#F23D3D':'#1E88E5';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();
+// Price labels
+ctx.fillStyle='#9AB8A8';ctx.font='10px DM Mono,monospace';ctx.textAlign='right';
+ctx.fillText(maxP.toLocaleString(),W-4,16);ctx.fillText(minP.toLocaleString(),W-4,H-4);}
+
+function renderCommunity(){document.getElementById('dsCommList').innerHTML=DATA.community.map(c=>`<div class="comm-item"><div class="comm-avatar">${c.user[0]}</div><div class="comm-body"><div class="comm-user"><span>${c.user}</span><span class="comm-time">${c.time}</span></div><div class="comm-txt">${c.txt}</div></div></div>`).join('');}
+
+// Store detail popup
+function openStorePopup(stoId,storeIdx){const m=DATA.market.find(x=>x.id===stoId);if(!m||!m.stores||!m.stores[storeIdx])return;const s=m.stores[storeIdx];
+document.getElementById('storeDetailBody').innerHTML=`<div class="sdp-name">${s.icon} ${s.name}</div><div class="sdp-cat">${s.cat}</div><div class="sdp-row"><div class="sdp-key">주소</div><div class="sdp-val">${s.addr}</div></div><div class="sdp-row"><div class="sdp-key">영업시간</div><div class="sdp-val">${s.hours}</div></div><div class="sdp-row"><div class="sdp-key">업종</div><div class="sdp-val">${s.cat}</div></div><div class="sdp-row"><div class="sdp-key">소속 STO</div><div class="sdp-val">${m.name}</div></div><div style="margin-top:16px;padding:12px;background:var(--g-light);border-radius:12px;text-align:center;"><span style="font-size:13px;font-weight:700;color:var(--g2);">💳 하나카드 결제 시 상시 5% 할인</span></div>`;
+document.getElementById('storeDetailPopup').classList.add('show');}
+function closeStorePopup(){document.getElementById('storeDetailPopup').classList.remove('show');}
+
+// Exchange
+const EXCHANGES=[{name:'KDX',icon:'🏛️',desc:'한국데이터거래소'},{name:'NXT',icon:'📊',desc:'NEXTRADE'}];
+function goToExchange(type){if(!currentDetailId)return;const m=DATA.market.find(x=>x.id===currentDetailId);
+document.getElementById('esActionText').textContent=type==='buy'?'거래소에서 매수하기':'거래소에서 매도하기';document.getElementById('esSubText').textContent=`${m.name} · 현재가 ${m.price.toLocaleString()}원`;
+document.getElementById('esExchangeList').innerHTML=EXCHANGES.map(ex=>`<a href="#" onclick="closeExchangePopup();showToast('🔗 ${ex.name}(으)로 이동합니다…');return false;" style="display:flex;align-items:center;gap:14px;padding:16px;background:white;border:1.5px solid var(--border);border-radius:var(--r2);text-decoration:none;cursor:pointer;"><span style="font-size:28px;width:48px;height:48px;background:var(--g-light);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ex.icon}</span><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--text1);">${ex.name}</div><div style="font-size:11.5px;color:var(--text3);margin-top:2px;">${ex.desc}</div></div><span style="font-size:18px;color:var(--g1);font-weight:700;">→</span></a>`).join('');
+document.getElementById('sheetOverlay').classList.add('show');document.getElementById('exchangeSheet').classList.add('show');}
+function closeExchangePopup(){document.getElementById('sheetOverlay').classList.remove('show');document.getElementById('exchangeSheet').classList.remove('show');}
+function onFab(){document.getElementById('fab').classList.add('spin');showToast('🔄 데이터를 새로고침했습니다');setTimeout(()=>document.getElementById('fab').classList.remove('spin'),900);}
+
+// START
+updateAllUI();renderWatchlist();
+</script>
+</body>
+</html>
